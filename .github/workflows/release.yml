@@ -21,7 +21,11 @@ jobs:
         with:
           version: latest
       - name: Build
-        run: make commit
+        run: |
+          export CGO_ENABLED=0
+          export CFLAGS="-Wno-error=unused-command-line-argument"
+          export LDFLAGS="-Wno-error=unused-command-line-argument"
+          make commit
       - name: Automatic Releases
         uses: marvinpinto/action-automatic-releases@v1.2.1
         with:
