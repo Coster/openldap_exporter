@@ -381,36 +381,38 @@ func (s *Scraper) addReplicationQueries() {
 
 func (s *Scraper) setReplicationValue(entries []*ldap.Entry, q *query) {
 	for _, entry := range entries {
-		val := entry.GetAttributeValue(q.searchAttr)
-		if val == "" {
-			// not every entry will have this attribute
-			continue
+		values := entry.GetAttributeValues(q.searchAttr)
+		for _, val := range values {
+			if val == "" {
+				// not every entry will have this attribute
+				continue
+			}
+			ll := s.log.With(
+				"filter", q.searchFilter,
+				"attr", q.searchAttr,
+				"value", val,
+			)
+			valueBuffer := strings.Split(val, "#")
+			gt, err := time.Parse("20060102150405.999999Z", valueBuffer[0])
+			if err != nil {
+				ll.Warn("unexpected gt value", "err", err)
+				continue
+			}
+			count, err := strconv.ParseFloat(valueBuffer[1], 64)
+			if err != nil {
+				ll.Warn("unexpected count value", "err", err)
+				continue
+			}
+			sid := valueBuffer[2]
+			mod, err := strconv.ParseFloat(valueBuffer[3], 64)
+			if err != nil {
+				ll.Warn("unexpected mod value", "err", err)
+				continue
+			}
+			q.metric.WithLabelValues(sid, "gt").Set(float64(gt.Unix()))
+			q.metric.WithLabelValues(sid, "count").Set(count)
+			q.metric.WithLabelValues(sid, "mod").Set(mod)
 		}
-		ll := s.log.With(
-			"filter", q.searchFilter,
-			"attr", q.searchAttr,
-			"value", val,
-		)
-		valueBuffer := strings.Split(val, "#")
-		gt, err := time.Parse("20060102150405.999999Z", valueBuffer[0])
-		if err != nil {
-			ll.Warn("unexpected gt value", "err", err)
-			continue
-		}
-		count, err := strconv.ParseFloat(valueBuffer[1], 64)
-		if err != nil {
-			ll.Warn("unexpected count value", "err", err)
-			continue
-		}
-		sid := valueBuffer[2]
-		mod, err := strconv.ParseFloat(valueBuffer[3], 64)
-		if err != nil {
-			ll.Warn("unexpected mod value", "err", err)
-			continue
-		}
-		q.metric.WithLabelValues(sid, "gt").Set(float64(gt.Unix()))
-		q.metric.WithLabelValues(sid, "count").Set(count)
-		q.metric.WithLabelValues(sid, "mod").Set(mod)
 	}
 }
 
