@@ -1,7 +1,5 @@
 > [!IMPORTANT]
-> This repository is now archived.  
-> Thank you all for your excellent contributions.  
-> May it continue to live in all your wonderful forks.
+> Fix extraction for multiple ContextCSN 
 
 # OpenLDAP Prometheus Exporter
 
